@@ -1,6 +1,11 @@
 package ru.markuu.Library.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.annotations.Type;
+import org.hibernate.type.descriptor.jdbc.BinaryJdbcType;
+
 
 import java.util.List;
 
@@ -21,6 +26,13 @@ public class Book {
         this.quotes = quotes;
     }
 
+    public Book(String title, String description, byte[] coverImage, BookText bookText) {
+        this.title = title;
+        this.description = description;
+        this.coverImage = coverImage;
+        this.bookText = new BookText();
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -34,18 +46,22 @@ public class Book {
 
     @Lob
     @Column(name = "cover_image")
+    @JdbcType(BinaryJdbcType.class)
     private byte[] coverImage;
 
     // Связь с текстом (один к одному)
     @OneToOne(mappedBy = "book")
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
     private BookText bookText;
 
     // Связь с тэгами (многие ко многим)
     @ManyToMany(mappedBy = "books")
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
     private List<Tag> tags;
 
     // Связь с цитатами (один ко многим)
     @OneToMany(mappedBy = "sourceBook")
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
     private List<Quote> quotes;
 
     public int getId() {

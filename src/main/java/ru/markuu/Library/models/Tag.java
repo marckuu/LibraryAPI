@@ -22,7 +22,7 @@ public class Tag {
     @Column(name = "id")
     private int id;
 
-    @Column(name = "tag_name")
+    @Column(name = "tag_name", unique = true)
     private String name;
 
     @ManyToMany()

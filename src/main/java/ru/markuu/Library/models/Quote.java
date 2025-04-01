@@ -21,7 +21,7 @@ public class Quote {
     @Column(name = "id")
     private int id;
 
-    @Column(name = "quote_text")
+    @Column(name = "quote_text", unique = true)
     private String text;
 
     // Связь с книгой откуда эта цитата

@@ -36,12 +36,22 @@ public class BookService {
     public void addBook(Book book) {
         if (book == null) throw new IllegalArgumentException("Book cannot be null");
         if (book.getTitle() == null || book.getBookText() == null) throw new IllegalArgumentException("Title or Text cannot be null");
-//        if (book.getQuotes() == null) book.setQuotes(new ArrayList<>(Collections.singletonList(
-//                new Quote("Пустая цитата", book)
-//        )));
-//        if (book.getTags() == null) book.setTags(new ArrayList<>(Collections.singletonList(
-//                new Tag("Пустой тэг", new ArrayList<>(Collections.singletonList(book)))
-//        )));
+        if (book.getTags() != null) {
+            for (Tag tag : book.getTags()) {
+                if (tag.getBooks() != null) {
+                    tag.getBooks().add(book);
+                }
+                else {
+                    tag.setBooks(new ArrayList<>(Collections.singletonList(book)));
+                }
+            }
+        }
+        if (book.getQuotes() != null) {
+            for (Quote quote : book.getQuotes()) {
+                quote.setSourceBook(book);
+            }
+        }
+        book.getBookText().setBook(book);
         bookRepository.save(book);
     }
 
@@ -49,12 +59,7 @@ public class BookService {
     public void updateBook(int id, Book updatedBook) {
         if (updatedBook == null) throw new IllegalArgumentException("Book cannot be null");
         if (updatedBook.getTitle() == null || updatedBook.getBookText() == null) throw new IllegalArgumentException("Title or Text cannot be null");
-//        if (updatedBook.getQuotes().size() > 1 && updatedBook.getQuotes().getFirst().getText().equals("Пустая цитата")) {
-//            updatedBook.getQuotes().removeFirst();
-//        }
-//        if (updatedBook.getTags().size() > 1 && updatedBook.getTags().getFirst().getName().equals("Пустой тэг")) {
-//            updatedBook.getTags().removeFirst();
-//        }
+
 
         if (bookRepository.findById(id).isEmpty()) throw new IllegalArgumentException("Book does not exist");
 

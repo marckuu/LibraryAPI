@@ -3,9 +3,12 @@ package ru.markuu.Library.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.markuu.Library.models.Book;
 import ru.markuu.Library.models.Quote;
 import ru.markuu.Library.repositories.QuoteRepository;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -32,7 +35,13 @@ public class QuoteService {
     public void addQuote(Quote quote) {
         if (quote.getText() == null) throw new IllegalArgumentException("Quote text is null");
         if (quote.getSourceBook() == null) throw new IllegalArgumentException("Quote sourceBook is null");
-
+        Book book = quote.getSourceBook();
+        if (book.getQuotes() != null) {
+            book.getQuotes().add(quote);
+        }
+        else {
+            book.setQuotes(new ArrayList<>(Collections.singletonList(quote)));
+        }
         quoteRepository.save(quote);
     }
 

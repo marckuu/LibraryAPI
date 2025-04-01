@@ -2,9 +2,12 @@ package ru.markuu.Library.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.markuu.Library.models.Book;
 import ru.markuu.Library.models.Tag;
 import ru.markuu.Library.repositories.TagRepository;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -29,6 +32,16 @@ public class TagService {
 
     public void addTag(Tag tag) {
         if (tag.getName() == null) throw new IllegalArgumentException("Tag name is null");
+        if (!tag.getBooks().isEmpty()) {
+            for (Book book : tag.getBooks()) {
+                if (book.getTags() != null) {
+                    book.getTags().add(tag);
+                }
+                else {
+                    book.setTags(new ArrayList<>(Collections.singletonList(tag)));
+                }
+            }
+        }
         tagRepository.save(tag);
     }
 
