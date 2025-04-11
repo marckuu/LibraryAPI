@@ -29,12 +29,13 @@ public class AllBooksResponce {
         responce.setTitle(book.getTitle());
         responce.setCoverImage(book.getCoverImage());
 
-        if (book.getTags() == null) {
+        if (book.getTags() != null) {
             responce.setTags(new ArrayList<>());
+            for (Tag tag : book.getTags()) {
+                responce.getTags().add(tag.getName());
+            }
         }
-        for (Tag tag : book.getTags()) {
-            responce.getTags().add(tag.getName());
-        }
+
         return responce;
     }
 }
