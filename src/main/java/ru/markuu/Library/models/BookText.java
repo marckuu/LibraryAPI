@@ -1,19 +1,16 @@
 package ru.markuu.Library.models;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "book_text")
+@Setter()
+@Getter()
+@NoArgsConstructor()
+@AllArgsConstructor
+@Builder
 public class BookText {
-
-    public BookText() {
-
-    }
-
-    public BookText(String text, Book book) {
-        this.text = text;
-        this.book = book;
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +18,7 @@ public class BookText {
     private int id;
 
     @Lob
-    @Column(name = "content")
+    @Column(name = "content", nullable = false)
     private String text;
 
     // Owning side один к одному с книгой
@@ -29,27 +26,4 @@ public class BookText {
     @JoinColumn(name = "book_id", referencedColumnName = "id")
     private Book book;
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public Book getBook() {
-        return book;
-    }
-
-    public void setBook(Book book) {
-        this.book = book;
-    }
 }

@@ -3,11 +3,19 @@ package ru.markuu.Library.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.markuu.Library.DTO.requests.AddBookRequest;
+import ru.markuu.Library.DTO.requests.AddQuotesRequest;
+import ru.markuu.Library.DTO.requests.AddTagsRequest;
+import ru.markuu.Library.DTO.requests.UpdateBookRequest;
+import ru.markuu.Library.DTO.responces.AllBooksResponce;
+import ru.markuu.Library.DTO.responces.BookResponce;
 import ru.markuu.Library.models.Book;
 import ru.markuu.Library.models.Quote;
 import ru.markuu.Library.models.Tag;
 import ru.markuu.Library.repositories.BookRepository;
 import ru.markuu.Library.repositories.BookTextRepository;
+import ru.markuu.Library.repositories.TagRepository;
+import ru.markuu.Library.util.exceptions.BookNotFoundException;
 
 import java.util.*;
 
@@ -16,71 +24,88 @@ import java.util.*;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final BaseService   baseService;
+    private final TagRepository tagRepository;
 
     @Autowired
-    public BookService(BookRepository bookRepository, BookTextRepository bookTextRepository) {
+    public BookService(BookRepository bookRepository, BaseService baseService, TagRepository tagRepository) {
         this.bookRepository = bookRepository;
+        this.baseService = baseService;
+        this.tagRepository = tagRepository;
     }
 
-    // CRUD
-
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<AllBooksResponce> getAllBooks() {
+        List<Book> books = bookRepository.findAll();
+        List<AllBooksResponce> allBooksResponces = new ArrayList<>();
+        for (Book book : books) {
+            allBooksResponces.add(AllBooksResponce.fromEntity(book));
+        }
+        return allBooksResponces;
     }
 
-    public Book getBookById(int id) {
-        return bookRepository.findById(id).orElse(null);
+
+    public BookResponce getBookById(int id) throws BookNotFoundException {
+        return BookResponce.fromEntity(baseService.getBookOrElseThrow(id));
     }
 
     @Transactional
-    public void addBook(Book book) {
-        if (book == null) throw new IllegalArgumentException("Book cannot be null");
-        if (book.getTitle() == null || book.getBookText() == null) throw new IllegalArgumentException("Title or Text cannot be null");
-        if (book.getTags() != null) {
-            for (Tag tag : book.getTags()) {
-                if (tag.getBooks() != null) {
-                    tag.getBooks().add(book);
-                }
-                else {
-                    tag.setBooks(new ArrayList<>(Collections.singletonList(book)));
-                }
-            }
-        }
-        if (book.getQuotes() != null) {
-            for (Quote quote : book.getQuotes()) {
-                quote.setSourceBook(book);
-            }
-        }
-        book.getBookText().setBook(book);
+    public void addBook(AddBookRequest request) {
+        bookRepository.save(AddBookRequest.toEntity(request));
+    }
+
+    @Transactional
+    public void updateBook(int id, UpdateBookRequest request) throws BookNotFoundException {
+        Book book = baseService.getBookOrElseThrow(id);
+        book.setTitle(request.getTitle());
+        book.setDescription(request.getDescription());
+        book.setCoverImage(request.getCoverImage());
+        book.getBookText().setText(request.getBookText());
         bookRepository.save(book);
     }
 
     @Transactional
-    public void updateBook(int id, Book updatedBook) {
-        if (updatedBook == null) throw new IllegalArgumentException("Book cannot be null");
-        if (updatedBook.getTitle() == null || updatedBook.getBookText() == null) throw new IllegalArgumentException("Title or Text cannot be null");
+    public void addQuotes(int id, AddQuotesRequest addQuotesRequest) throws BookNotFoundException {
+        Book book = baseService.getBookOrElseThrow(id);
+        List<Quote> quotes = AddQuotesRequest.toQuotes(addQuotesRequest);
+        for (Quote quote : quotes) {
+            quote.setSourceBook(book);
+        }
+        book.setQuotes(quotes);
+        bookRepository.save(book);
+    }
 
+    @Transactional
+    public void addTags(int id, AddTagsRequest addTagsRequest) throws BookNotFoundException {
+        Book book = baseService.getBookOrElseThrow(id);
 
-        if (bookRepository.findById(id).isEmpty()) throw new IllegalArgumentException("Book does not exist");
+        List<Tag> tagList = new ArrayList<>();
+        for (String tag : addTagsRequest.getTags()) {
+            if (tagRepository.existsByName(tag)) {
+                Tag tagObj = tagRepository.findByName(tag);
+                tagList.add(tagObj);
+            }
+            else {
+                Tag tagObj = new Tag();
+                tagObj.setName(tag);
+                tagList.add(tagObj);
+            }
+        }
 
-        Book bookToUpdate = bookRepository.findById(id).get();
-        bookToUpdate.setTitle(updatedBook.getTitle());
-        bookToUpdate.setDescription(updatedBook.getDescription());
-        bookToUpdate.setCoverImage(updatedBook.getCoverImage());
-        bookToUpdate.setBookText(updatedBook.getBookText());
-        bookToUpdate.setTags(updatedBook.getTags());
-        bookToUpdate.setQuotes(updatedBook.getQuotes());
-        bookRepository.save(bookToUpdate);
+        for (Tag tag : tagList) {
+            if (tag.getBooks() == null) {
+                tag.setBooks(new ArrayList<>(Collections.singleton(book)));
+            } else if (!book.getTags().contains(tag)) {
+                tag.getBooks().add(book);
+            }
+        }
+        book.setTags(tagList);
+        bookRepository.save(book);
     }
 
     @Transactional
     public void deleteBook(int id) {
-        if (bookRepository.existsById(id)) {
-            bookRepository.deleteById(id);
-        }
-        else {
-            throw new IllegalArgumentException("Book not found");
-        }
+        bookRepository.deleteById(id);
     }
+
 
 }
